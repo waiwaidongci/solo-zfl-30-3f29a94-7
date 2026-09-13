@@ -1,0 +1,376 @@
+{
+  "version": 2,
+  "exportedAt": "2026-09-13T08:32:03.058Z",
+  "limits": {
+    "maxDepth": 40,
+    "minDepth": 0.1,
+    "coordMin": 0,
+    "coordMax": 100
+  },
+  "marks": [
+    {
+      "id": "seed-a017",
+      "code": "A-017",
+      "type": "ceramic",
+      "dive": "DIVE-01",
+      "x": 42,
+      "y": 46,
+      "depth": 17.8,
+      "orientation": "东",
+      "condition": "边缘残缺",
+      "note": "靠近船肋",
+      "status": "collected",
+      "evidence": {
+        "bagNo": "",
+        "photoDesc": "",
+        "handler": "",
+        "storage": ""
+      },
+      "returnReason": "",
+      "returnSnapshot": null,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "seed-w003",
+      "code": "W-003",
+      "type": "wood",
+      "dive": "DIVE-02",
+      "x": 58,
+      "y": 39,
+      "depth": 18.2,
+      "orientation": "西北",
+      "condition": "稳定",
+      "note": "疑似横梁",
+      "status": "collected",
+      "evidence": {
+        "bagNo": "BAG-07",
+        "photoDesc": "全景1张+特写2张",
+        "handler": "李四",
+        "storage": "冷藏柜A-01"
+      },
+      "returnReason": "",
+      "returnSnapshot": null,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+      "code": "T-101",
+      "type": "ceramic",
+      "dive": "DIVE-01",
+      "x": 50,
+      "y": 35.75,
+      "depth": 18,
+      "orientation": "",
+      "condition": "",
+      "note": "",
+      "status": "archived",
+      "evidence": {
+        "bagNo": "BAG-01",
+        "photoDesc": "补拍特写3张",
+        "handler": "李四",
+        "storage": "柜T-01"
+      },
+      "returnReason": "",
+      "returnSnapshot": null,
+      "createdAt": "2026-09-13T08:32:01.859Z",
+      "updatedAt": "2026-09-13T08:32:02.208Z"
+    },
+    {
+      "id": "9e240b2d-8815-4d40-990e-5376c5c69770",
+      "code": "T-102",
+      "type": "ceramic",
+      "dive": "DIVE-01",
+      "x": 32.69,
+      "y": 38.49,
+      "depth": 18,
+      "orientation": "",
+      "condition": "",
+      "note": "",
+      "status": "review",
+      "evidence": {
+        "bagNo": "BAG-02",
+        "photoDesc": "全景",
+        "handler": "李四",
+        "storage": "柜T-02"
+      },
+      "returnReason": "",
+      "returnSnapshot": null,
+      "createdAt": "2026-09-13T08:32:02.441Z",
+      "updatedAt": "2026-09-13T08:32:02.675Z"
+    },
+    {
+      "id": "b4f639b2-63d3-4723-81ff-e60a40c235e1",
+      "code": "T-103",
+      "type": "ceramic",
+      "dive": "DIVE-01",
+      "x": 30.65,
+      "y": 35.75,
+      "depth": 19,
+      "orientation": "",
+      "condition": "",
+      "note": "",
+      "status": "collected",
+      "evidence": {
+        "bagNo": "",
+        "photoDesc": "",
+        "handler": "",
+        "storage": ""
+      },
+      "returnReason": "",
+      "returnSnapshot": null,
+      "createdAt": "2026-09-13T08:32:02.508Z",
+      "updatedAt": "2026-09-13T08:32:02.508Z"
+    }
+  ],
+  "audit": [
+    {
+      "seq": 1,
+      "ts": "2026-09-13T08:32:01.859Z",
+      "operator": "张三",
+      "action": "create",
+      "label": "新增标记 T-101",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "create",
+          "fields": []
+        }
+      ]
+    },
+    {
+      "seq": 2,
+      "ts": "2026-09-13T08:32:01.974Z",
+      "operator": "张三",
+      "action": "update",
+      "label": "修改标记",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "evidence.bagNo",
+              "before": "",
+              "after": "BAG-01"
+            },
+            {
+              "field": "evidence.photoDesc",
+              "before": "",
+              "after": "全景1张"
+            },
+            {
+              "field": "evidence.handler",
+              "before": "",
+              "after": "李四"
+            },
+            {
+              "field": "evidence.storage",
+              "before": "",
+              "after": "柜T-01"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 3,
+      "ts": "2026-09-13T08:32:02.009Z",
+      "operator": "张三",
+      "action": "transition:submitReview",
+      "label": "提交复核",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "collected",
+              "after": "review"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 4,
+      "ts": "2026-09-13T08:32:02.075Z",
+      "operator": "张三",
+      "action": "transition:sendBack",
+      "label": "退回补证",
+      "reason": "照片模糊，需补拍",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "review",
+              "after": "returned"
+            },
+            {
+              "field": "returnReason",
+              "before": "",
+              "after": "照片模糊，需补拍"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 5,
+      "ts": "2026-09-13T08:32:02.141Z",
+      "operator": "张三",
+      "action": "update",
+      "label": "修改标记",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "evidence.photoDesc",
+              "before": "全景1张",
+              "after": "补拍特写3张"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 6,
+      "ts": "2026-09-13T08:32:02.176Z",
+      "operator": "张三",
+      "action": "transition:resubmit",
+      "label": "重新提交复核",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "returned",
+              "after": "review"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 7,
+      "ts": "2026-09-13T08:32:02.208Z",
+      "operator": "张三",
+      "action": "transition:approve",
+      "label": "通过入库",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "code": "T-101",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "review",
+              "after": "archived"
+            },
+            {
+              "field": "returnReason",
+              "before": "照片模糊，需补拍",
+              "after": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 8,
+      "ts": "2026-09-13T08:32:02.441Z",
+      "operator": "张三",
+      "action": "create",
+      "label": "新增标记 T-102",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "9e240b2d-8815-4d40-990e-5376c5c69770",
+          "code": "T-102",
+          "kind": "create",
+          "fields": []
+        }
+      ]
+    },
+    {
+      "seq": 9,
+      "ts": "2026-09-13T08:32:02.508Z",
+      "operator": "张三",
+      "action": "create",
+      "label": "新增标记 T-103",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "b4f639b2-63d3-4723-81ff-e60a40c235e1",
+          "code": "T-103",
+          "kind": "create",
+          "fields": []
+        }
+      ]
+    },
+    {
+      "seq": 10,
+      "ts": "2026-09-13T08:32:02.675Z",
+      "operator": "张三",
+      "action": "batch",
+      "label": "批量操作（1 项）",
+      "reason": "",
+      "changes": [
+        {
+          "markId": "9e240b2d-8815-4d40-990e-5376c5c69770",
+          "code": "T-102",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "collected",
+              "after": "review"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seq": 11,
+      "ts": "2026-09-13T08:32:02.842Z",
+      "operator": "张三",
+      "action": "undo",
+      "label": "撤销：批量操作（1 项）",
+      "reason": "",
+      "changes": [],
+      "undoOf": 10
+    },
+    {
+      "seq": 12,
+      "ts": "2026-09-13T08:32:02.875Z",
+      "operator": "张三",
+      "action": "redo",
+      "label": "重做：批量操作（1 项）",
+      "reason": "",
+      "changes": [],
+      "redoOf": 10
+    }
+  ]
+}
