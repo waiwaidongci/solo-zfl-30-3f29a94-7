@@ -44,6 +44,7 @@
     STORAGE_CONFLICT: "STORAGE_CONFLICT",
     NOT_FOUND: "NOT_FOUND",
     BAD_TRANSITION: "BAD_TRANSITION",
+    ARCHIVED_LOCKED: "ARCHIVED_LOCKED",
     REASON_REQUIRED: "REASON_REQUIRED",
     EVIDENCE_UNCHANGED: "EVIDENCE_UNCHANGED",
     NO_CHANGE: "NO_CHANGE",
@@ -156,6 +157,19 @@
 
   // 审计diff跟踪的顶层字段
   const TRACKED_FIELDS = ["code", "type", "dive", "x", "y", "depth", "orientation", "condition", "note", "status", "returnReason"];
+
+  // 允许通过 update/流转patch 修改的字段；status、returnSnapshot 等只能由状态机变更，
+  // 防止绕过页面直接注入 {status:"archived"} 之类的写入
+  const EDITABLE_FIELDS = ["code", "type", "dive", "x", "y", "depth", "orientation", "condition", "note", "evidence"];
+
+  function sanitizePatch(patch) {
+    const clean = {};
+    if (!patch || typeof patch !== "object") return clean;
+    for (const k of EDITABLE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(patch, k)) clean[k] = patch[k];
+    }
+    return clean;
+  }
 
   function diffMarks(before, after) {
     const changes = [];
@@ -279,7 +293,10 @@
     function opUpdate(draft, id, patch) {
       const idx = draft.findIndex((m) => m.id === id);
       if (idx < 0) throw { issues: [issue(ERR.NOT_FOUND, "记录不存在：" + id)] };
-      const merged = normalizeMark(Object.assign({}, draft[idx], patch, { id, createdAt: draft[idx].createdAt }), idgen);
+      if (draft[idx].status === "archived") {
+        throw { issues: [issue(ERR.ARCHIVED_LOCKED, "已入库，不能再修改（如需改动请先撤销入库）", { field: "status" })] };
+      }
+      const merged = normalizeMark(Object.assign({}, draft[idx], sanitizePatch(patch), { id, createdAt: draft[idx].createdAt }), idgen);
       merged.updatedAt = now();
       const issues = validateMark(merged, draft, limits, id);
       if (issues.length) throw { issues };
@@ -290,21 +307,32 @@
     function opDelete(draft, id, ctx) {
       const idx = draft.findIndex((m) => m.id === id);
       if (idx < 0) throw { issues: [issue(ERR.NOT_FOUND, "记录不存在：" + id)] };
+      if (draft[idx].status === "archived") {
+        throw { issues: [issue(ERR.ARCHIVED_LOCKED, "已入库，不能删除（如需移除请先撤销入库）", { field: "status" })] };
+      }
       if (!String((ctx && ctx.reason) || "").trim()) {
         throw { issues: [issue(ERR.REASON_REQUIRED, "删除必须填写原因", { field: "reason" })] };
       }
       draft.splice(idx, 1);
     }
 
-    function opTransition(draft, id, action, ctx) {
-      const mark = draft.find((m) => m.id === id);
-      if (!mark) throw { issues: [issue(ERR.NOT_FOUND, "记录不存在：" + id)] };
+    // 流转可携带未保存的表单修改（patch），与状态变更同一事务提交：
+    // 退回补证后改完证据直接点“重新提交复核”即可，无需先单独保存
+    function opTransition(draft, id, action, ctx, patch) {
+      const idx = draft.findIndex((m) => m.id === id);
+      if (idx < 0) throw { issues: [issue(ERR.NOT_FOUND, "记录不存在：" + id)] };
       const t = TRANSITIONS[action];
       if (!t) throw { issues: [issue(ERR.BAD_TRANSITION, "未知操作：" + action)] };
-      const issues = [];
-      if (t.from.indexOf(mark.status) < 0) {
-        issues.push(issue(ERR.BAD_TRANSITION, "当前状态「" + STATUS[mark.status] + "」不能" + t.label));
+      if (t.from.indexOf(draft[idx].status) < 0) {
+        throw { issues: [issue(ERR.BAD_TRANSITION, "当前状态「" + STATUS[draft[idx].status] + "」不能" + t.label)] };
       }
+      let mark = draft[idx];
+      if (patch) {
+        mark = normalizeMark(Object.assign({}, mark, sanitizePatch(patch), { id: mark.id, createdAt: mark.createdAt }), idgen);
+        mark.updatedAt = now();
+        draft[idx] = mark;
+      }
+      const issues = [];
       if (t.needReason && !String((ctx && ctx.reason) || "").trim()) {
         issues.push(issue(ERR.REASON_REQUIRED, t.label + "必须填写原因", { field: "reason" }));
       }
@@ -339,7 +367,7 @@
         case "add": return opAdd(draft, op.data || {});
         case "update": return opUpdate(draft, op.id, op.patch || {});
         case "delete": return opDelete(draft, op.id, ctx);
-        case "transition": return opTransition(draft, op.id, op.action, ctx);
+        case "transition": return opTransition(draft, op.id, op.action, ctx, op.patch);
         default: throw { issues: [issue(ERR.BAD_TRANSITION, "未知批量操作类型：" + op.type)] };
       }
     }
@@ -367,11 +395,11 @@
       });
     }
 
-    function transition(id, action, ctx) {
+    function transition(id, action, ctx, patch) {
       const t = TRANSITIONS[action];
       const label = t ? t.label : action;
       return commit(label, ctx, (draft) => {
-        const mark = opTransition(draft, id, action, ctx || {});
+        const mark = opTransition(draft, id, action, ctx || {}, patch);
         return { action: "transition:" + action, mark: clone(mark) };
       });
     }
@@ -401,12 +429,15 @@
       const ctxIssues = checkCtx(ctx);
       if (ctxIssues) { undoStack.push(cmd); return { ok: false, issues: ctxIssues }; }
       redoStack.push(cmd);
+      // 与普通变更一样留痕：操作者、时间、原因、逐字段前后值
+      const before = clone(state.marks);
       state.marks = clone(cmd.before);
+      const changes = diffMarks(before, state.marks);
       seq += 1;
       state.audit.push({
         seq, ts: now(), operator: String(ctx.operator).trim(),
         action: "undo", label: "撤销：" + cmd.label, reason: String(ctx.reason || ""),
-        changes: [], undoOf: cmd.auditSeq,
+        changes, undoOf: cmd.auditSeq,
       });
       persist();
       emit();
@@ -419,12 +450,14 @@
       const ctxIssues = checkCtx(ctx);
       if (ctxIssues) { redoStack.push(cmd); return { ok: false, issues: ctxIssues }; }
       undoStack.push(cmd);
+      const before = clone(state.marks);
       state.marks = clone(cmd.after);
+      const changes = diffMarks(before, state.marks);
       seq += 1;
       state.audit.push({
         seq, ts: now(), operator: String(ctx.operator).trim(),
         action: "redo", label: "重做：" + cmd.label, reason: String(ctx.reason || ""),
-        changes: [], redoOf: cmd.auditSeq,
+        changes, redoOf: cmd.auditSeq,
       });
       persist();
       emit();

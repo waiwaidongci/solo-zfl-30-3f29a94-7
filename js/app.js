@@ -19,6 +19,7 @@
     ]));
   }
   const store = createStore({ storage: adapter });
+  window.__store = store; // 供端到端检查验证“绕过页面的写入也被数据层拒绝”
 
   const $ = (sel) => document.querySelector(sel);
   const map = $("#map");
@@ -225,7 +226,7 @@
     }
     returnNote.hidden = !(mark && mark.status === "returned");
     if (mark && mark.status === "returned") {
-      returnNote.textContent = "退回原因：" + (mark.returnReason || "（未填写）") + " —— 请补充证据后重新提交复核。";
+      returnNote.textContent = "退回原因：" + (mark.returnReason || "（未填写）") + " —— 直接在上方补充证据后点「重新提交复核」。";
     }
     // 按状态给出流转按钮
     transitionBar.innerHTML = "";
@@ -304,10 +305,8 @@
     F("y").value = y;
   });
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    clearMsg();
-    const data = {
+  function formData() {
+    return {
       code: F("code").value.trim(),
       type: F("type").value,
       dive: F("dive").value.trim(),
@@ -324,6 +323,12 @@
         storage: F("storage").value.trim(),
       },
     };
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    clearMsg();
+    const data = formData();
     const result = editingId ? store.updateMark(editingId, data, ctx()) : store.addMark(data, ctx());
     if (!result.ok) { showError(result.issues); return; }
     reasonEl.value = "";
@@ -337,11 +342,14 @@
     render(store.getState());
   });
 
+  // 流转携带当前表单内容：退回补证后改完证据直接点“重新提交复核”即可，
+  // 修改与状态变更同一事务提交，无需先单独保存
   function doTransition(id, action) {
     clearMsg();
-    const result = store.transition(id, action, ctx());
+    const result = store.transition(id, action, ctx(), formData());
     if (!result.ok) { showError(result.issues); return; }
     reasonEl.value = "";
+    fillForm(result.mark);
     showOk(TRANSITIONS[action].label + " 完成：" + result.mark.code + "（当前状态：" + STATUS[result.mark.status] + "）");
     render(store.getState());
   }

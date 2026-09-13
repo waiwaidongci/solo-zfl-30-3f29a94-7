@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "exportedAt": "2026-09-13T08:32:03.058Z",
+  "exportedAt": "2026-09-13T09:04:18.232Z",
   "limits": {
     "maxDepth": 40,
     "minDepth": 0.1,
@@ -55,7 +55,7 @@
       "updatedAt": null
     },
     {
-      "id": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+      "id": "331799c3-9cc7-436f-93be-ae5dabc100be",
       "code": "T-101",
       "type": "ceramic",
       "dive": "DIVE-01",
@@ -74,11 +74,11 @@
       },
       "returnReason": "",
       "returnSnapshot": null,
-      "createdAt": "2026-09-13T08:32:01.859Z",
-      "updatedAt": "2026-09-13T08:32:02.208Z"
+      "createdAt": "2026-09-13T09:04:17.017Z",
+      "updatedAt": "2026-09-13T09:04:17.370Z"
     },
     {
-      "id": "9e240b2d-8815-4d40-990e-5376c5c69770",
+      "id": "91c17036-0c8a-479e-8d09-862b6504db65",
       "code": "T-102",
       "type": "ceramic",
       "dive": "DIVE-01",
@@ -97,11 +97,11 @@
       },
       "returnReason": "",
       "returnSnapshot": null,
-      "createdAt": "2026-09-13T08:32:02.441Z",
-      "updatedAt": "2026-09-13T08:32:02.675Z"
+      "createdAt": "2026-09-13T09:04:17.617Z",
+      "updatedAt": "2026-09-13T09:04:17.853Z"
     },
     {
-      "id": "b4f639b2-63d3-4723-81ff-e60a40c235e1",
+      "id": "c284b284-5215-41d9-a2a3-d6f1231db349",
       "code": "T-103",
       "type": "ceramic",
       "dive": "DIVE-01",
@@ -120,21 +120,21 @@
       },
       "returnReason": "",
       "returnSnapshot": null,
-      "createdAt": "2026-09-13T08:32:02.508Z",
-      "updatedAt": "2026-09-13T08:32:02.508Z"
+      "createdAt": "2026-09-13T09:04:17.681Z",
+      "updatedAt": "2026-09-13T09:04:17.681Z"
     }
   ],
   "audit": [
     {
       "seq": 1,
-      "ts": "2026-09-13T08:32:01.859Z",
+      "ts": "2026-09-13T09:04:17.017Z",
       "operator": "张三",
       "action": "create",
       "label": "新增标记 T-101",
       "reason": "",
       "changes": [
         {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "markId": "331799c3-9cc7-436f-93be-ae5dabc100be",
           "code": "T-101",
           "kind": "create",
           "fields": []
@@ -143,14 +143,14 @@
     },
     {
       "seq": 2,
-      "ts": "2026-09-13T08:32:01.974Z",
+      "ts": "2026-09-13T09:04:17.152Z",
       "operator": "张三",
       "action": "update",
       "label": "修改标记",
       "reason": "",
       "changes": [
         {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "markId": "331799c3-9cc7-436f-93be-ae5dabc100be",
           "code": "T-101",
           "kind": "update",
           "fields": [
@@ -180,14 +180,14 @@
     },
     {
       "seq": 3,
-      "ts": "2026-09-13T08:32:02.009Z",
+      "ts": "2026-09-13T09:04:17.181Z",
       "operator": "张三",
       "action": "transition:submitReview",
       "label": "提交复核",
       "reason": "",
       "changes": [
         {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "markId": "331799c3-9cc7-436f-93be-ae5dabc100be",
           "code": "T-101",
           "kind": "update",
           "fields": [
@@ -202,14 +202,14 @@
     },
     {
       "seq": 4,
-      "ts": "2026-09-13T08:32:02.075Z",
+      "ts": "2026-09-13T09:04:17.264Z",
       "operator": "张三",
       "action": "transition:sendBack",
       "label": "退回补证",
       "reason": "照片模糊，需补拍",
       "changes": [
         {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "markId": "331799c3-9cc7-436f-93be-ae5dabc100be",
           "code": "T-101",
           "kind": "update",
           "fields": [
@@ -229,17 +229,22 @@
     },
     {
       "seq": 5,
-      "ts": "2026-09-13T08:32:02.141Z",
+      "ts": "2026-09-13T09:04:17.333Z",
       "operator": "张三",
-      "action": "update",
-      "label": "修改标记",
+      "action": "transition:resubmit",
+      "label": "重新提交复核",
       "reason": "",
       "changes": [
         {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "markId": "331799c3-9cc7-436f-93be-ae5dabc100be",
           "code": "T-101",
           "kind": "update",
           "fields": [
+            {
+              "field": "status",
+              "before": "returned",
+              "after": "review"
+            },
             {
               "field": "evidence.photoDesc",
               "before": "全景1张",
@@ -251,36 +256,14 @@
     },
     {
       "seq": 6,
-      "ts": "2026-09-13T08:32:02.176Z",
-      "operator": "张三",
-      "action": "transition:resubmit",
-      "label": "重新提交复核",
-      "reason": "",
-      "changes": [
-        {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
-          "code": "T-101",
-          "kind": "update",
-          "fields": [
-            {
-              "field": "status",
-              "before": "returned",
-              "after": "review"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "seq": 7,
-      "ts": "2026-09-13T08:32:02.208Z",
+      "ts": "2026-09-13T09:04:17.370Z",
       "operator": "张三",
       "action": "transition:approve",
       "label": "通过入库",
       "reason": "",
       "changes": [
         {
-          "markId": "2251bf48-147a-4c0d-8721-c173d40e99f0",
+          "markId": "331799c3-9cc7-436f-93be-ae5dabc100be",
           "code": "T-101",
           "kind": "update",
           "fields": [
@@ -299,15 +282,15 @@
       ]
     },
     {
-      "seq": 8,
-      "ts": "2026-09-13T08:32:02.441Z",
+      "seq": 7,
+      "ts": "2026-09-13T09:04:17.617Z",
       "operator": "张三",
       "action": "create",
       "label": "新增标记 T-102",
       "reason": "",
       "changes": [
         {
-          "markId": "9e240b2d-8815-4d40-990e-5376c5c69770",
+          "markId": "91c17036-0c8a-479e-8d09-862b6504db65",
           "code": "T-102",
           "kind": "create",
           "fields": []
@@ -315,15 +298,15 @@
       ]
     },
     {
-      "seq": 9,
-      "ts": "2026-09-13T08:32:02.508Z",
+      "seq": 8,
+      "ts": "2026-09-13T09:04:17.681Z",
       "operator": "张三",
       "action": "create",
       "label": "新增标记 T-103",
       "reason": "",
       "changes": [
         {
-          "markId": "b4f639b2-63d3-4723-81ff-e60a40c235e1",
+          "markId": "c284b284-5215-41d9-a2a3-d6f1231db349",
           "code": "T-103",
           "kind": "create",
           "fields": []
@@ -331,15 +314,15 @@
       ]
     },
     {
-      "seq": 10,
-      "ts": "2026-09-13T08:32:02.675Z",
+      "seq": 9,
+      "ts": "2026-09-13T09:04:17.853Z",
       "operator": "张三",
       "action": "batch",
       "label": "批量操作（1 项）",
       "reason": "",
       "changes": [
         {
-          "markId": "9e240b2d-8815-4d40-990e-5376c5c69770",
+          "markId": "91c17036-0c8a-479e-8d09-862b6504db65",
           "code": "T-102",
           "kind": "update",
           "fields": [
@@ -353,24 +336,50 @@
       ]
     },
     {
-      "seq": 11,
-      "ts": "2026-09-13T08:32:02.842Z",
+      "seq": 10,
+      "ts": "2026-09-13T09:04:18.017Z",
       "operator": "张三",
       "action": "undo",
       "label": "撤销：批量操作（1 项）",
       "reason": "",
-      "changes": [],
-      "undoOf": 10
+      "changes": [
+        {
+          "markId": "91c17036-0c8a-479e-8d09-862b6504db65",
+          "code": "T-102",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "review",
+              "after": "collected"
+            }
+          ]
+        }
+      ],
+      "undoOf": 9
     },
     {
-      "seq": 12,
-      "ts": "2026-09-13T08:32:02.875Z",
+      "seq": 11,
+      "ts": "2026-09-13T09:04:18.048Z",
       "operator": "张三",
       "action": "redo",
       "label": "重做：批量操作（1 项）",
       "reason": "",
-      "changes": [],
-      "redoOf": 10
+      "changes": [
+        {
+          "markId": "91c17036-0c8a-479e-8d09-862b6504db65",
+          "code": "T-102",
+          "kind": "update",
+          "fields": [
+            {
+              "field": "status",
+              "before": "collected",
+              "after": "review"
+            }
+          ]
+        }
+      ],
+      "redoOf": 9
     }
   ]
 }

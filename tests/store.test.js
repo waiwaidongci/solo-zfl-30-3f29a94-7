@@ -290,3 +290,136 @@ test("导出 JSON 含版本、标记与审计，可再解析", () => {
 test("状态机覆盖：四个状态都有中文名", () => {
   assert.deepEqual(STATUS_KEYS, ["collected", "review", "returned", "archived"]);
 });
+
+// ---- 入库终态：数据层强制，绕过页面的写入也拒绝 ----
+
+test("入库终态：已入库不能修改、删除、再流转，批量写入也被整批拦下", () => {
+  const { store } = makeStore();
+  const id = store.addMark(goodMark, ctx).mark.id;
+  store.transition(id, "submitReview", ctx);
+  store.transition(id, "approve", ctx);
+  assert.equal(store.getState().marks[0].status, "archived");
+
+  // 直接改（绕过页面的写入口径与页面一致，都走数据层）
+  const upd = store.updateMark(id, { depth: 30 }, ctx);
+  assert.equal(upd.ok, false);
+  assert.ok(codes(upd).includes(ERR.ARCHIVED_LOCKED));
+  // 删除
+  const del = store.deleteMark(id, { operator: "张三", reason: "想删掉" });
+  assert.ok(codes(del).includes(ERR.ARCHIVED_LOCKED));
+  // 再流转
+  const back = store.transition(id, "sendBack", { operator: "张三", reason: "退回" });
+  assert.ok(codes(back).includes(ERR.BAD_TRANSITION));
+  // 批量里夹带对已入库的修改 → 整批不落地
+  const id2 = store.addMark({ ...goodMark, code: "A-002", evidence: { ...goodEvidence, storage: "柜A-02" } }, ctx).mark.id;
+  const before = store.getState();
+  const batch = store.batch([
+    { type: "update", id: id2, patch: { depth: 33 } },
+    { type: "update", id, patch: { depth: 31 } }, // 已入库 → 整批失败
+  ], ctx);
+  assert.equal(batch.ok, false);
+  assert.ok(batch.issues.some((i) => i.code === ERR.ARCHIVED_LOCKED));
+  assert.equal(store.getState().marks.find((m) => m.id === id2).depth, 18); // 前半批也没进
+  assert.equal(store.getState().audit.length, before.audit.length);
+
+  // 注入 status 字段绕过状态机 → 被清洗，不生效
+  const inject = store.updateMark(id2, { status: "archived", returnSnapshot: null }, ctx);
+  assert.equal(inject.ok, false); // 清洗后无有效变更
+  assert.equal(store.getState().marks.find((m) => m.id === id2).status, "collected");
+
+  // 撤销入库后恢复可改（终态的唯一合法出口）
+  assert.equal(store.undo(ctx).ok, true); // 先撤掉 add(A-002)
+  assert.equal(store.undo(ctx).ok, true); // 再撤掉 approve
+  assert.equal(store.getState().marks[0].status, "review");
+  assert.equal(store.updateMark(id, { depth: 19 }, ctx).ok, true);
+});
+
+// ---- 撤销/重做审计一致性 ----
+
+test("撤销和重做像普通变更一样记录操作者、时间、原因和逐字段前后值", () => {
+  const { store } = makeStore();
+  const id = store.addMark(goodMark, ctx).mark.id;
+  store.updateMark(id, { depth: 21.5, condition: "已清理" }, { operator: "李四", reason: "复测修正" });
+
+  assert.equal(store.undo({ operator: "王五", reason: "改错了，回退" }).ok, true);
+  const audit = store.getState().audit;
+  const undoEntry = audit[audit.length - 1];
+  assert.equal(undoEntry.action, "undo");
+  assert.equal(undoEntry.operator, "王五");
+  assert.equal(undoEntry.reason, "改错了，回退");
+  assert.ok(undoEntry.ts);
+  const depthDiff = undoEntry.changes[0].fields.find((f) => f.field === "depth");
+  assert.equal(depthDiff.before, 21.5); // 撤销前
+  assert.equal(depthDiff.after, 18);    // 撤销后恢复的值
+  assert.ok(undoEntry.changes[0].fields.some((f) => f.field === "condition"));
+
+  assert.equal(store.redo({ operator: "王五", reason: "确认无误，恢复" }).ok, true);
+  const redoEntry = store.getState().audit.at(-1);
+  assert.equal(redoEntry.action, "redo");
+  assert.equal(redoEntry.operator, "王五");
+  assert.equal(redoEntry.reason, "确认无误，恢复");
+  const redoDepth = redoEntry.changes[0].fields.find((f) => f.field === "depth");
+  assert.equal(redoDepth.before, 18);
+  assert.equal(redoDepth.after, 21.5);
+
+  // 撤销新增：diff 体现为整条移除
+  store.undo(ctx); store.undo(ctx); store.undo(ctx); // 撤掉 update、再回到 add 前
+  const undoCreate = store.getState().audit.at(-1);
+  assert.equal(undoCreate.changes[0].kind, "delete");
+  assert.equal(store.getState().marks.length, 0);
+});
+
+// ---- 退回补证：改完证据直接重新提交（无需先单独保存）----
+
+test("退回补证后带着表单修改直接重新提交复核：证据已改则通过并一次留痕", () => {
+  const { store } = makeStore();
+  const id = store.addMark(goodMark, ctx).mark.id;
+  store.transition(id, "submitReview", ctx);
+  store.transition(id, "sendBack", { operator: "王五", reason: "照片模糊，需补拍" });
+
+  const auditBefore = store.getState().audit.length;
+  // 用户改完证据直接点“重新提交复核”，修改随流转一次提交
+  const resub = store.transition(id, "resubmit", ctx, {
+    evidence: { ...goodEvidence, photoDesc: "补拍特写3张" },
+    note: "已补拍",
+  });
+  assert.equal(resub.ok, true);
+  const m = store.getState().marks[0];
+  assert.equal(m.status, "review");
+  assert.equal(m.evidence.photoDesc, "补拍特写3张"); // patch 已生效
+  assert.equal(m.note, "已补拍");
+  // 一次事务 = 一条审计，同时含证据字段与状态的前后值
+  assert.equal(store.getState().audit.length, auditBefore + 1);
+  const entry = store.getState().audit.at(-1);
+  const fields = entry.changes[0].fields;
+  assert.ok(fields.some((f) => f.field === "evidence.photoDesc" && f.after === "补拍特写3张"));
+  assert.ok(fields.some((f) => f.field === "status" && f.before === "returned" && f.after === "review"));
+});
+
+test("退回补证后证据没改仍拦住，且携带的修改不会半截落地", () => {
+  const { store } = makeStore();
+  const id = store.addMark(goodMark, ctx).mark.id;
+  store.transition(id, "submitReview", ctx);
+  store.transition(id, "sendBack", { operator: "王五", reason: "袋号看不清" });
+
+  // patch 里证据原样（只改了备注）→ 拦
+  const r1 = store.transition(id, "resubmit", ctx, { evidence: { ...goodEvidence }, note: "只改了备注" });
+  assert.equal(r1.ok, false);
+  assert.ok(codes(r1).includes(ERR.EVIDENCE_UNCHANGED));
+  assert.equal(store.getState().marks[0].note, ""); // 原子：备注也没进去
+  assert.equal(store.getState().marks[0].status, "returned");
+
+  // patch 里证据改了但深度超限 → 拦，证据也不落地
+  const r2 = store.transition(id, "resubmit", ctx, {
+    evidence: { ...goodEvidence, bagNo: "BAG-09" },
+    depth: 45,
+  });
+  assert.equal(r2.ok, false);
+  assert.ok(codes(r2).includes(ERR.DEPTH_EXCEEDED));
+  assert.equal(store.getState().marks[0].evidence.bagNo, "BAG-1");
+
+  // 证据改了且合法 → 过
+  const r3 = store.transition(id, "resubmit", ctx, { evidence: { ...goodEvidence, bagNo: "BAG-09" } });
+  assert.equal(r3.ok, true);
+  assert.equal(store.getState().marks[0].status, "review");
+});
